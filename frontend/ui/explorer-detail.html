@@ -1,0 +1,53 @@
+<!doctype dhtml lib>
+
+<script>
+  import { state } from 'state'
+</script>
+
+<!-- explorer detail -->
+<div :is="explorer-detail">
+  <a href="/explorers" class="back-link">← К списку исследователей</a>
+
+  <div :if="explorer">
+    <div class="detail">
+      <h1>{ explorer.name }</h1>
+      <p class="subtitle">{ explorer.specialization }</p>
+
+      <dl>
+        <dt>Год рождения</dt>
+        <dd>{ explorer.birth_year || '—' }</dd>
+        <dt>Национальность</dt>
+        <dd>{ explorer.nationality || '—' }</dd>
+        <dt>Биография</dt>
+        <dd>{ explorer.biography || 'Биография неизвестна.' }</dd>
+      </dl>
+
+      <div class="related">
+        <h2>Найденные предметы ({ objects.length })</h2>
+        <ul :if="objects.length" class="items-grid" style="list-style:none; padding:0">
+          <li class="item-card" :each="obj in objects">
+            <a href="/items/{ obj.id }"><h3>{ obj.name }</h3></a>
+            <span class="status { obj.status }">{ obj.status == 'on_exhibition' ? 'На выставке' : 'В запаснике' }</span>
+          </li>
+        </ul>
+        <p :if="!objects.length" class="empty">Пока не найдено ни одного предмета.</p>
+      </div>
+    </div>
+  </div>
+  <div :if="!explorer" class="empty">Исследователь не найден или загружается…</div>
+
+  <script>
+    this.explorer = null
+    this.objects = []
+
+    state.on('id', async ({ id }) => {
+      if (!id) { this.update({ explorer: null, objects: [] }); return }
+      const explorer = await fetch(`/api/explorers/${id}`).then(r => r.json())
+      if (explorer.error) { this.update({ explorer: null }); return }
+      const items = (await Promise.all(
+        explorer.objects.map(i => fetch(`/api/items/${i}`).then(r => r.json()))
+      )).filter(x => !x.error)
+      this.update({ explorer, objects: items })
+    })
+  </script>
+</div>

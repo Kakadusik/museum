@@ -1,0 +1,45 @@
+<!doctype dhtml lib>
+
+<script>
+  import { state } from 'state'
+</script>
+
+<!-- exhibition detail -->
+<div :is="exhibition-detail">
+  <a href="/exhibitions" class="back-link">← К списку выставок</a>
+
+  <div :if="exhibition">
+    <div class="detail">
+      <h1>{ exhibition.title }</h1>
+      <p :if="exhibition.location" class="subtitle">{ exhibition.location }</p>
+      <p>{ exhibition.description || 'Описание пока не подготовлено.' }</p>
+
+      <div class="related">
+        <h2>Экспонаты ({ objects.length })</h2>
+        <ul :if="objects.length" class="items-grid" style="list-style:none; padding:0">
+          <li class="item-card" :each="obj in objects">
+            <a href="/items/{ obj.id }"><h3>{ obj.name }</h3></a>
+            <span class="status { obj.status }">{ obj.status == 'on_exhibition' ? 'На выставке' : 'В запаснике' }</span>
+          </li>
+        </ul>
+        <p :if="!objects.length" class="empty">Экспонатов пока нет.</p>
+      </div>
+    </div>
+  </div>
+  <div :if="!exhibition" class="empty">Выставка не найдена или загружается…</div>
+
+  <script>
+    this.exhibition = null
+    this.objects = []
+
+    state.on('id', async ({ id }) => {
+      if (!id) { this.update({ exhibition: null, objects: [] }); return }
+      const exhibition = await fetch(`/api/exhibitions/${id}`).then(r => r.json())
+      if (exhibition.error) { this.update({ exhibition: null }); return }
+      const objects = (await Promise.all(
+        (exhibition.objects || []).map(i => fetch(`/api/items/${i}`).then(r => r.json()))
+      )).filter(x => !x.error)
+      this.update({ exhibition, objects })
+    })
+  </script>
+</div>

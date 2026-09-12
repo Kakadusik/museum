@@ -1,0 +1,143 @@
+<!doctype dhtml lib>
+
+<script>
+  import { state } from 'state'
+</script>
+
+<!-- items list -->
+<div :is="items">
+  <div class="page-header">
+    <h1>Предметы</h1>
+    <button popovertarget="create-item" class="btn-primary">Добавить предмет</button>
+  </div>
+
+  <form class="filters" :onsubmit="applyFilters">
+    <input type="search" name="q" value="{ q }" placeholder="Поиск по названию или описанию..." :oninput="handleFilter">
+    <select name="violation_type" :onchange="handleFilter">
+      <option value="">Все типы</option>
+      <option :each="vt in violationTypes" value="{ vt }" :selected="violation_type == vt">{ violationLabel(vt) }</option>
+    </select>
+    <select name="status" :onchange="handleFilter">
+      <option value="">Все статусы</option>
+      <option value="on_exhibition" :selected="status == 'on_exhibition'">На выставке</option>
+      <option value="in_storage" :selected="status == 'in_storage'">В запаснике</option>
+    </select>
+    <select name="material" :onchange="handleFilter">
+      <option value="">Все материалы</option>
+      <option :each="mat in materials" value="{ mat }" :selected="material == mat">{ mat }</option>
+    </select>
+  </form>
+
+  <div :if="items.length && !loading" class="items-grid">
+    <div class="item-card" :each="item in items">
+      <a href="/items/{ item.id }"><h3>{ item.name }</h3></a>
+      <span class="status { item.status }">{ item.status == 'on_exhibition' ? 'На выставке' : 'В запаснике' }</span>
+      <p class="meta">{ violationLabel(item.violation_type) }{ item.material ? ' · ' + item.material : '' }{ item.explorer ? ' · ' + item.explorer.name : '' }</p>
+      <p class="desc">{ item.description || 'Без описания' }</p>
+    </div>
+  </div>
+  <div :if="!items.length && !loading" class="empty">Ничего не найдено</div>
+  <div :if="loading" class="empty">Загрузка…</div>
+
+  <dialog id="create-item" popover>
+    <h2 style="margin-top:0">Новый предмет</h2>
+    <form class="grid" :onsubmit="createItem">
+      <label>Название *
+        <input name="name" required>
+      </label>
+      <div class="row">
+        <label>Тип нарушения *
+          <input name="violation_type" required placeholder="gravity / time / logic / ...">
+        </label>
+        <label>Статус
+          <select name="status">
+            <option value="in_storage">В запаснике</option>
+            <option value="on_exhibition">На выставке</option>
+          </select>
+        </label>
+      </div>
+      <label>Описание
+        <textarea name="description"></textarea>
+      </label>
+      <div class="row">
+        <label>Материал
+          <input name="material">
+        </label>
+        <label>Эпоха
+          <input name="epoch">
+        </label>
+      </div>
+      <label>Происхождение
+        <input name="origin">
+      </label>
+      <label>Исследователь (ID)
+        <input name="explorer_id" type="number" placeholder="пусто = не указан">
+      </label>
+      <div class="dialog-actions">
+        <button type="button" onclick="this.closest('dialog').hidePopover()">Отмена</button>
+        <button type="submit" class="btn-primary">Создать</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    this.items = []
+    this.loading = false
+    this.violationTypes = ['gravity', 'time', 'logic', 'geometry', 'sound']
+    this.materials = []
+
+    get q() { return state.q || '' }
+    get status() { return state.status || '' }
+    get violation_type() { return state.violation_type || '' }
+    get material() { return state.material || '' }
+
+    violationLabel(t) {
+      const labels = { gravity: 'гравитация', time: 'время', logic: 'логика', geometry: 'геометрия', sound: 'звук' }
+      return labels[t] || t
+    }
+
+    handleFilter(e) {
+      state[e.target.name] = e.target.value || undefined
+      this.fetchItems()
+    }
+
+    applyFilters(e) {
+      e.preventDefault()
+      this.fetchItems()
+    }
+
+    async fetchItems() {
+      this.loading = true
+      const params = new URLSearchParams()
+      if (this.q) params.set('q', this.q)
+      if (this.status) params.set('status', this.status)
+      if (this.violation_type) params.set('violation_type', this.violation_type)
+      if (this.material) params.set('material', this.material)
+      const data = await fetch(`/api/items?${params}`).then(r => r.json())
+      this.materials = [...new Set(data.items.map(i => i.material).filter(Boolean))]
+      this.update({ items: data.items, loading: false })
+    }
+
+    async createItem(e) {
+      const data = Object.fromEntries(new FormData(e.target))
+      if (data.explorer_id) {
+        data.explorer_id = parseInt(data.explorer_id, 10)
+      } else {
+        delete data.explorer_id
+      }
+      const res = await fetch('/api/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (res.ok) {
+        document.getElementById('create-item').hidePopover()
+        this.fetchItems()
+      }
+    }
+
+    async mounted() {
+      this.fetchItems()
+    }
+  </script>
+</div>

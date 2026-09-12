@@ -1,0 +1,16 @@
+# .env (настоящие креды не коммитим)
+backend/.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Nue frontend
+frontend/.dist/
+
+# Логи/временные файлы сервера
+backend/server.pid
+backend/server.out.log
+backend/server.err.log
+tmp/

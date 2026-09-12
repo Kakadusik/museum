@@ -1,0 +1,164 @@
+<!doctype dhtml lib>
+
+<script>
+  import { state } from 'state'
+</script>
+
+<!-- item detail -->
+<div :is="item-detail">
+  <a href="/items" class="back-link">← К списку предметов</a>
+
+  <div :if="item">
+    <div class="detail">
+      <h1>{ item.name }</h1>
+      <p><span class="status { item.status }">{ item.status == 'on_exhibition' ? 'На выставке' : 'В запаснике' }</span></p>
+      <p>{ item.description }</p>
+
+      <dl>
+        <dt>Тип нарушения</dt>
+        <dd>{ violationLabel(item.violation_type) }</dd>
+        <dt>Материал</dt>
+        <dd>{ item.material || '—' }</dd>
+        <dt>Эпоха</dt>
+        <dd>{ item.epoch || '—' }</dd>
+        <dt>Происхождение</dt>
+        <dd>{ item.origin || '—' }</dd>
+        <dt>Найден</dt>
+        <dd>
+          <a :if="item.explorer" href="/explorers/{ item.explorer.id }">{ item.explorer.name }</a>
+          <span :if="!item.explorer">—</span>
+          <span :if="item.explorer"> · { item.explorer.specialization }</span>
+        </dd>
+        <dt>Выставки</dt>
+        <dd :if="item.exhibitions.length">
+          <span :each="ex in item.exhibitions"><a href="/exhibitions/{ ex.id }">{ ex.title }</a> </span>
+        </dd>
+        <dd :if="!item.exhibitions.length">—</dd>
+      </dl>
+
+      <div class="detail-actions">
+        <button popovertarget="edit-item" class="btn-primary btn-small">Редактировать</button>
+        <button popovertarget="delete-item" class="btn-danger btn-small">Удалить</button>
+      </div>
+    </div>
+
+    <dialog id="edit-item" popover>
+      <h2 style="margin-top:0">Редактировать предмет</h2>
+      <form class="grid" :onsubmit="updateItem">
+        <label>Название *
+          <input name="name" value="{ item.name }" required>
+        </label>
+        <div class="row">
+          <label>Тип нарушения *
+            <input name="violation_type" value="{ item.violation_type }" required>
+          </label>
+          <label>Статус
+            <select name="status">
+              <option value="in_storage" :selected="item.status == 'in_storage'">В запаснике</option>
+              <option value="on_exhibition" :selected="item.status == 'on_exhibition'">На выставке</option>
+            </select>
+          </label>
+        </div>
+        <label>Описание
+          <textarea name="description">{ item.description }</textarea>
+        </label>
+        <div class="row">
+          <label>Материал
+            <input name="material" value="{ item.material }">
+          </label>
+          <label>Эпоха
+            <input name="epoch" value="{ item.epoch }">
+          </label>
+        </div>
+        <label>Происхождение
+          <input name="origin" value="{ item.origin }">
+        </label>
+        <label>Исследователь
+          <select name="explorer_id">
+            <option value="">Не указан</option>
+            <option :each="explorer in explorers" value="{ explorer.id }"
+              :selected="item.explorer && item.explorer.id == explorer.id">
+              { explorer.name } ({ explorer.specialization })
+            </option>
+          </select>
+        </label>
+        <fieldset>
+          <legend>Выставки</legend>
+          <label style="display:flex; gap:.5em; align-items:center" :each="exh in exhibitions">
+            <input type="checkbox" name="exhibition_ids" value="{ exh.id }"
+              :checked="item.exhibitions.some(x => x.id == exh.id)">
+            <span>{ exh.title } — { exh.location }</span>
+          </label>
+        </fieldset>
+        <div class="dialog-actions">
+          <button type="button" onclick="this.closest('dialog').hidePopover()">Отмена</button>
+          <button type="submit" class="btn-primary">Сохранить</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="delete-item" popover>
+      <h2 style="margin-top:0">Удалить предмет?</h2>
+      <p>«{ item.name }» будет удалён безвозвратно.</p>
+      <form :onsubmit="deleteItem">
+        <div class="dialog-actions">
+          <button type="button" onclick="this.closest('dialog').hidePopover()">Отмена</button>
+          <button type="submit" class="btn-danger">Удалить</button>
+        </div>
+      </form>
+    </dialog>
+  </div>
+
+  <div :if="!item" class="empty">Предмет не найден или загружается…</div>
+
+  <script>
+    this.item = null
+    this.explorers = []
+    this.exhibitions = []
+
+    violationLabel(t) {
+      const labels = { gravity: 'гравитация', time: 'время', logic: 'логика', geometry: 'геометрия', sound: 'звук' }
+      return labels[t] || t
+    }
+
+    state.on('id', async ({ id }) => {
+      if (!id) { this.update({ item: null }); return }
+      const item = await fetch(`/api/items/${id}`).then(r => r.json())
+      this.update(item.error ? { item: null } : { item })
+    })
+
+    async mounted() {
+      const [explorers, exhibitions] = await Promise.all([
+        fetch('/api/explorers').then(r => r.json()),
+        fetch('/api/exhibitions').then(r => r.json())
+      ])
+      this.update({ explorers: explorers.explorers, exhibitions: exhibitions.exhibitions })
+    }
+
+    async updateItem(e) {
+      const data = Object.fromEntries(new FormData(e.target))
+      const boxes = Array.from(e.target.querySelectorAll('[name="exhibition_ids"]'))
+      data.exhibition_ids = boxes.filter(b => b.checked).map(b => parseInt(b.value, 10))
+      if (data.explorer_id) {
+        data.explorer_id = parseInt(data.explorer_id, 10)
+      } else {
+        delete data.explorer_id
+      }
+      const res = await fetch(`/api/items/${this.item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (res.ok) {
+        document.getElementById('edit-item').hidePopover()
+        const fresh = await res.json()
+        this.update({ item: fresh })
+      }
+    }
+
+    async deleteItem(e) {
+      const res = await fetch(`/api/items/${this.item.id}`, { method: 'DELETE' })
+      if (res.ok) location.href = '/items'
+    }
+  </script>
+</div>

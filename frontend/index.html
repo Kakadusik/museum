@@ -1,0 +1,53 @@
+<!doctype dhtml>
+
+<script>
+  import { state } from 'state'
+
+  state.setup({
+    route: '/:section/:id',
+    autolink: true,
+    query: ['q', 'status', 'violation_type', 'material']
+  })
+</script>
+
+<body>
+  <header>
+    <nav>
+      <a href="/" class="brand">Музей Невозможных</a>
+      <a href="/items">Предметы</a>
+      <a href="/explorers">Исследователи</a>
+      <a href="/exhibitions">Выставки</a>
+    </nav>
+  </header>
+
+  <main>
+    <article/>
+  </main>
+
+  <footer>
+    <span>Архив предметов, нарушающих законы физики, времени и логики</span>
+  </footer>
+
+  <script>
+    state.on('section id', ({ section, id }) => {
+      const view = !section || section === '/'
+        ? 'dashboard'
+        : (section === 'items' && id)
+          ? 'item-detail'
+          : (section === 'items')
+            ? 'items'
+            : (section === 'explorers' && id)
+              ? 'explorer-detail'
+              : (section === 'explorers')
+                ? 'explorers'
+                : (section === 'exhibitions' && id)
+                  ? 'exhibition-detail'
+                  : 'exhibitions'
+      this.mount(view, 'article')
+    })
+
+    mounted() {
+      state.init()
+    }
+  </script>
+</body>

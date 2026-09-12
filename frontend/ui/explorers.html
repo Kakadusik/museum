@@ -1,0 +1,165 @@
+<!doctype dhtml lib>
+
+<!-- explorers list -->
+<div :is="explorers">
+  <div class="page-header">
+    <h1>Исследователи</h1>
+    <button popovertarget="create-explorer" class="btn-primary">Добавить исследователя</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Имя</th>
+        <th>Специализация</th>
+        <th>Национальность</th>
+        <th>Год рождения</th>
+        <th>Предметов</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr :each="explorer in explorers">
+        <td><a href="/explorers/{ explorer.id }">{ explorer.name }</a></td>
+        <td>{ explorer.specialization }</td>
+        <td>{ explorer.nationality || '—' }</td>
+        <td>{ explorer.birth_year || '—' }</td>
+        <td>{ explorer.objects_count }</td>
+        <td style="white-space:nowrap">
+          <button class="btn-small" :onclick="openEdit(explorer)">Изменить</button>
+          <button class="btn-small btn-danger" :onclick="openDelete(explorer)">Удалить</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <dialog id="create-explorer" popover>
+    <h2 style="margin-top:0">Новый исследователь</h2>
+    <form class="grid" :onsubmit="createExplorer">
+      <div class="row">
+        <label>Имя *
+          <input name="name" required>
+        </label>
+        <label>Специализация *
+          <input name="specialization" required>
+        </label>
+      </div>
+      <div class="row">
+        <label>Год рождения
+          <input name="birth_year" type="number">
+        </label>
+        <label>Национальность
+          <input name="nationality">
+        </label>
+      </div>
+      <label>Биография
+        <textarea name="biography"></textarea>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" onclick="this.closest('dialog').hidePopover()">Отмена</button>
+        <button type="submit" class="btn-primary">Создать</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="edit-explorer">
+    <h2 style="margin-top:0">Редактировать исследователя</h2>
+    <form class="grid" :onsubmit="updateExplorer">
+      <div class="row">
+        <label>Имя *
+          <input name="name" value="{ selected.name }" required>
+        </label>
+        <label>Специализация *
+          <input name="specialization" value="{ selected.specialization }" required>
+        </label>
+      </div>
+      <div class="row">
+        <label>Год рождения
+          <input name="birth_year" type="number" value="{ selected.birth_year }">
+        </label>
+        <label>Национальность
+          <input name="nationality" value="{ selected.nationality }">
+        </label>
+      </div>
+      <label>Биография
+        <textarea name="biography">{ selected.biography }</textarea>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" onclick="this.closest('dialog').close()">Отмена</button>
+        <button type="submit" class="btn-primary">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="delete-explorer">
+    <h2 style="margin-top:0">Удалить исследователя?</h2>
+    <p>«{ selected.name }» будет удалён. Исследователи, нашедшие предметы, не удаляются.</p>
+    <form :onsubmit="deleteExplorer">
+      <div class="dialog-actions">
+        <button type="button" onclick="this.closest('dialog').close()">Отмена</button>
+        <button type="submit" class="btn-danger">Удалить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    this.explorers = []
+    this.selected = {}
+
+    openEdit(explorer) {
+      this.update({ selected: explorer })
+      this.root.querySelector('#edit-explorer').showModal()
+    }
+
+    openDelete(explorer) {
+      this.update({ selected: explorer })
+      this.root.querySelector('#delete-explorer').showModal()
+    }
+
+    async load() {
+      const data = await fetch('/api/explorers').then(r => r.json())
+      this.update({ explorers: data.explorers })
+    }
+
+    async createExplorer(e) {
+      const data = Object.fromEntries(new FormData(e.target))
+      if (data.birth_year) data.birth_year = parseInt(data.birth_year, 10)
+      if (!data.biography) delete data.biography
+      const res = await fetch('/api/explorers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (res.ok) {
+        document.getElementById('create-explorer').hidePopover()
+        this.load()
+      }
+    }
+
+    async updateExplorer(e) {
+      const data = Object.fromEntries(new FormData(e.target))
+      if (data.birth_year) data.birth_year = parseInt(data.birth_year, 10)
+      const res = await fetch(`/api/explorers/${this.selected.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (res.ok) {
+        this.root.querySelector('#edit-explorer').close()
+        this.load()
+      }
+    }
+
+    async deleteExplorer(e) {
+      const res = await fetch(`/api/explorers/${this.selected.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        this.root.querySelector('#delete-explorer').close()
+        this.load()
+      }
+    }
+
+    mounted() {
+      this.load()
+    }
+  </script>
+</div>

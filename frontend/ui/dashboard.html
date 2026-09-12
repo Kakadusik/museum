@@ -1,0 +1,63 @@
+<!doctype dhtml lib>
+
+<!-- dashboard -->
+<div :is="dashboard">
+  <h1>Музей Невозможных Предметов</h1>
+  <p class="subtitle">Архив предметов, нарушающих законы физики, времени и логики</p>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-number">{ stats.total_objects }</span>
+      <span class="stat-label">Предметов</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">{ stats.total_explorers }</span>
+      <span class="stat-label">Исследователей</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">{ stats.total_exhibitions }</span>
+      <span class="stat-label">Выставок</span>
+    </div>
+  </div>
+
+  <div class="stats-columns">
+    <div class="stat-list">
+      <h2>По типу нарушения</h2>
+      <div class="stat-line" :each="[key, val] in Object.entries(stats.by_violation_type || {})">
+        <span class="stat-key">{ key }</span>
+        <span class="stat-val">{ val }</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="stat-list" style="margin-bottom: 1.4em">
+        <h2>По статусу</h2>
+        <div class="stat-line" :each="[key, val] in Object.entries(stats.by_status || {})">
+          <span class="stat-key"><span class="status { key }">{ key }</span></span>
+          <span class="stat-val">{ val }</span>
+        </div>
+      </div>
+
+      <div class="stat-list">
+        <h2>По эпохе</h2>
+        <div class="stat-line" :each="[key, val] in Object.entries(stats.by_epoch || {})">
+          <span class="stat-key">{ key }</span>
+          <span class="stat-val">{ val }</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="empty" style="margin-top: 2em">
+    <a href="/items">Открыть каталог предметов →</a>
+  </p>
+
+  <script>
+    this.stats = { total_objects: 0, total_explorers: 0, total_exhibitions: 0 }
+
+    async mounted() {
+      const stats = await fetch('/api/stats').then(r => r.json())
+      this.update({ stats })
+    }
+  </script>
+</div>
