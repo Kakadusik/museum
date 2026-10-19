@@ -1,7 +1,8 @@
 import os
+import re
 
 from sanic import Sanic, empty, json
-from sanic.response import file
+from sanic.response import file, html
 
 from config import AUTO_RELOAD, DEBUG, FRONTEND_DIST, HOST, PORT
 from db import init_db
@@ -33,15 +34,32 @@ def _safe_resolve(dist_root: str, path: str) -> str | None:
     return None
 
 
+def _fix_index_mount_order(html_text: str) -> str:
+    imap_re = re.compile(r'<script type="importmap">.*?</script>', re.S)
+    mount_re = re.compile(r'<script src="/@nue/mount\.js"[^>]*></script>')
+    imap = imap_re.search(html_text)
+    mount = mount_re.search(html_text)
+    if not imap or not mount or mount.start() > imap.start():
+        return html_text
+    mount_tag = mount.group(0)
+    rest = html_text[: mount.start()] + html_text[mount.end():]
+    imap = imap_re.search(rest)
+    return rest[: imap.end()] + "\n" + mount_tag + rest[imap.end():]
+
+
 async def _serve_asset(request, path: str):
     if not os.path.isdir(FRONTEND_DIST):
         return json({"error": "frontend not built"}, status=404)
     asset = _safe_resolve(FRONTEND_DIST, path)
     if asset:
+        if os.path.normpath(asset) == os.path.normpath(os.path.join(FRONTEND_DIST, "index.html")):
+            with open(asset, encoding="utf-8") as f:
+                return html(_fix_index_mount_order(f.read()))
         return await file(asset)
     index_path = os.path.normpath(os.path.join(FRONTEND_DIST, "index.html"))
     if os.path.isfile(index_path):
-        return await file(index_path)
+        with open(index_path, encoding="utf-8") as f:
+            return html(_fix_index_mount_order(f.read()))
     return json({"error": "not found"}, status=404)
 
 

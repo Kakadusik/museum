@@ -86,7 +86,7 @@
           <legend>Выставки</legend>
           <label style="display:flex; gap:.5em; align-items:center" :each="exh in exhibitions">
             <input type="checkbox" name="exhibition_ids" value="{ exh.id }"
-              :checked="item.exhibitions.some(x => x.id == exh.id)">
+              :checked="item.exhibition_ids.includes(exh.id)">
             <span>{ exh.title } — { exh.location }</span>
           </label>
         </fieldset>
@@ -137,7 +137,7 @@
 
     async updateItem(e) {
       const data = Object.fromEntries(new FormData(e.target))
-      const boxes = Array.from(e.target.querySelectorAll('[name="exhibition_ids"]'))
+      const boxes = Array.from(e.target.querySelectorAll('input[type=checkbox]'))
       data.exhibition_ids = boxes.filter(b => b.checked).map(b => parseInt(b.value, 10))
       if (data.explorer_id) {
         data.explorer_id = parseInt(data.explorer_id, 10)

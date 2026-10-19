@@ -13,4 +13,6 @@ frontend/.dist/
 backend/server.pid
 backend/server.out.log
 backend/server.err.log
+server.log
+server.err.log
 tmp/

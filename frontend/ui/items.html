@@ -86,10 +86,14 @@
     this.violationTypes = ['gravity', 'time', 'logic', 'geometry', 'sound']
     this.materials = []
 
-    get q() { return state.q || '' }
-    get status() { return state.status || '' }
-    get violation_type() { return state.violation_type || '' }
-    get material() { return state.material || '' }
+    sync() {
+      this.update({
+        q: state.q || '',
+        status: state.status || '',
+        violation_type: state.violation_type || '',
+        material: state.material || ''
+      })
+    }
 
     violationLabel(t) {
       const labels = { gravity: 'гравитация', time: 'время', logic: 'логика', geometry: 'геометрия', sound: 'звук' }
@@ -98,6 +102,7 @@
 
     handleFilter(e) {
       state[e.target.name] = e.target.value || undefined
+      this.sync()
       this.fetchItems()
     }
 
@@ -137,6 +142,7 @@
     }
 
     async mounted() {
+      this.sync()
       this.fetchItems()
     }
   </script>
