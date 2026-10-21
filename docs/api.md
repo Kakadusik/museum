@@ -31,6 +31,7 @@
       "status": "on_exhibition",
       "created_at": "2026-09-12T17:13:00",
       "explorer": { "id": 1, "name": "Аристарх Осколков", "specialization": "Парадоксология" },
+      "exhibition_ids": [1],
       "exhibitions": [
         { "id": 1, "title": "Нарушенная гравитация", "location": "Зал «Анти-небо»" }
       ]

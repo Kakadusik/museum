@@ -106,7 +106,7 @@
     font-size: .85em;
   }
 
-  input, select, textarea {
+  input:not([type="checkbox"]), select, textarea {
     width: 100%;
     padding: .55em .7em;
     font-size: .95em;
@@ -396,6 +396,29 @@
     display: flex;
     gap: .5em;
     align-items: center;
+  }
+
+  input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  fieldset {
+    display: grid;
+    gap: .45em;
+    margin: 0;
+    padding: .75em .9em;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  legend {
+    padding: 0 .4em;
+    font-family: system-ui, sans-serif;
+    font-size: .85em;
+    color: var(--text-dim);
   }
 
   form.grid {

@@ -91,6 +91,16 @@ else delete data.explorer_id
 
 **Где применено:** `frontend/ui/explorers.html`, `frontend/ui/exhibitions.html`, `frontend/ui/item-detail.html`.
 
+## 8. Ошибка в выражении шаблона — это truthy
+
+**Проблема:** если выражение биндинга бросает исключение, `p()` в `nue.js` перехватывает его и возвращает строку `"[Error]"`. Для булевых атрибутов (`:checked`, `:disabled`, `:required`) это значение truthy, поэтому атрибут **устанавливается**.
+
+**Симптом:** в ответе API не было `exhibition_ids`, шаблон вызывал `item.exhibition_ids.includes(...)` → `TypeError` → `"[Error]"` → `:checked` ставился всем чекбоксам, и в форме редактирования были отмечены все выставки.
+
+**Обход:** держать контракт API и фронтенда согласованным (поле `exhibition_ids` добавлено в `object_to_dict`), а в шаблонах защищаться от отсутствующих данных: `:checked="(item.exhibition_ids || []).includes(exh.id)"`.
+
+**Где применено:** `backend/serializers.py`, `frontend/ui/item-detail.html`.
+
 ## Примечание по версиям
 
 Актуальная версия nuekit на npm — `2.0.0-beta.2`, более свежих нет. При обновлении Nue в будущем проверить, что баги 1–4 исчезли, и убрать обходы.

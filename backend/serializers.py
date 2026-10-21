@@ -2,6 +2,10 @@ async def object_to_dict(obj) -> dict:
     explorer_ref = obj.explorer
     explorer = await explorer_ref if explorer_ref is not None else None
     links = await obj.exhibition_links.all().prefetch_related("exhibition")
+    exhibitions = [
+        {"id": link.exhibition.id, "title": link.exhibition.title, "location": link.exhibition.location}
+        for link in links
+    ]
     return {
         "id": obj.id,
         "name": obj.name,
@@ -17,10 +21,8 @@ async def object_to_dict(obj) -> dict:
             if explorer
             else None
         ),
-        "exhibitions": [
-            {"id": link.exhibition.id, "title": link.exhibition.title, "location": link.exhibition.location}
-            for link in links
-        ],
+        "exhibition_ids": [e["id"] for e in exhibitions],
+        "exhibitions": exhibitions,
     }
 
 

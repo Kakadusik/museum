@@ -75,6 +75,7 @@ exb_id = exb["id"]
 s, it2 = req("PUT", f"/api/items/{item_id}", {"name": "Часы, копающие вглубь", "violation_type": "time", "status": "on_exhibition", "exhibition_ids": [exb_id]})
 all_ok &= check("update item + exhibition", s, 200)
 all_ok &= check("item exhibition linked", len(it2["exhibitions"]), 1)
+all_ok &= check("item exhibition_ids", it2.get("exhibition_ids"), [exb_id])
 
 s, det = req("GET", f"/api/items/{item_id}")
 all_ok &= check("item detail exhibitions", len(det["exhibitions"]), 1)

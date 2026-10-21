@@ -95,7 +95,7 @@
           <legend>Выставки</legend>
           <label class="checkbox-row" :each="exh in exhibitions">
             <input type="checkbox" name="exhibition_ids" value="{ exh.id }"
-              :checked="item.exhibition_ids.includes(exh.id)">
+              :checked="(item.exhibition_ids || []).includes(exh.id)">
             <span>{ exh.title } — { exh.location }</span>
           </label>
         </fieldset>
