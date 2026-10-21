@@ -177,6 +177,8 @@
     border-radius: 12px;
     padding: 1.6em;
     width: min(520px, 92vw);
+    max-height: 90vh;
+    overflow-y: auto;
 
     &::backdrop {
       background: rgba(0,0,0,.55);
@@ -388,6 +390,12 @@
     gap: .6em;
     justify-content: flex-end;
     margin-top: 1.1em;
+  }
+
+  .checkbox-row {
+    display: flex;
+    gap: .5em;
+    align-items: center;
   }
 
   form.grid {

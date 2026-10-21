@@ -92,6 +92,13 @@
           </div>
         </div>
       </label>
+      <fieldset>
+        <legend>Выставки</legend>
+        <label class="checkbox-row" :each="exh in exhibitions">
+          <input type="checkbox" name="exhibition_ids" value="{ exh.id }">
+          <span>{ exh.title } — { exh.location }</span>
+        </label>
+      </fieldset>
       <div class="dialog-actions">
         <button type="button" onclick="this.closest('dialog').hidePopover()">Отмена</button>
         <button type="submit" class="btn-primary">Создать</button>
@@ -115,6 +122,7 @@
     this.explorerQuery = ''
     this.explorerMatches = []
     this.selectedExplorerId = ''
+    this.exhibitions = []
 
     sync() {
       this.update({
@@ -180,6 +188,11 @@
       this.update({ explorerOptions: data.explorers })
     }
 
+    async loadExhibitions() {
+      const data = await fetch('/api/exhibitions').then(r => r.json())
+      this.update({ exhibitions: data.exhibitions })
+    }
+
     onExplorerInput(e) {
       const q = e.target.value
       const query = q.trim().toLowerCase()
@@ -217,6 +230,8 @@
       } else {
         delete data.explorer_id
       }
+      const boxes = Array.from(e.target.querySelectorAll('input[name=exhibition_ids]'))
+      data.exhibition_ids = boxes.filter(b => b.checked).map(b => parseInt(b.value, 10))
       const res = await fetch('/api/items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -235,6 +250,7 @@
       this.loadMeta()
       this.fetchItems()
       this.loadExplorers()
+      this.loadExhibitions()
     }
   </script>
 </div>
