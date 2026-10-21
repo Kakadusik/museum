@@ -413,6 +413,60 @@
     padding: 2em 0;
   }
 
+  .error {
+    color: #ff8f7a;
+    font-family: system-ui, sans-serif;
+    font-size: .9em;
+    padding: .8em 1em;
+    border: 1px solid #743c33;
+    border-radius: 8px;
+    background: rgba(116, 60, 51, .15);
+  }
+
+  .actions-cell {
+    white-space: nowrap;
+  }
+
+  .actions-buttons {
+    display: flex;
+    gap: .4em;
+  }
+
+  .autocomplete-dropdown {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-top: .3em;
+    max-height: 180px;
+    overflow-y: auto;
+    background: var(--bg-soft);
+  }
+
+  .autocomplete-item {
+    padding: .5em .7em;
+    cursor: pointer;
+    font-family: system-ui, sans-serif;
+    font-size: .9em;
+
+    &:hover {
+      background: var(--border);
+    }
+
+    span {
+      color: var(--text-dim);
+      font-size: .85em;
+    }
+  }
+
+  .examples {
+    display: flex;
+    align-items: center;
+    gap: .5em;
+    flex-wrap: wrap;
+    margin: 1em 0;
+    color: var(--text-dim);
+    font-size: .9em;
+  }
+
   @media (max-width: 720px) {
     .stats-grid { grid-template-columns: 1fr; }
     .stats-columns { grid-template-columns: 1fr; }

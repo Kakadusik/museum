@@ -9,6 +9,8 @@ from db import init_db
 from routes.exhibitions import exhibitions_bp
 from routes.explorers import explorers_bp
 from routes.items import items_bp
+from routes.meta import meta_bp
+from routes.sql import sql_bp
 from routes.stats import stats_bp
 
 app = Sanic("museum")
@@ -16,6 +18,8 @@ app = Sanic("museum")
 app.blueprint(items_bp)
 app.blueprint(explorers_bp)
 app.blueprint(exhibitions_bp)
+app.blueprint(meta_bp)
+app.blueprint(sql_bp)
 app.blueprint(stats_bp)
 
 

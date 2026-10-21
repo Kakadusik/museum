@@ -6,7 +6,7 @@
   state.setup({
     route: '/:section/:id',
     autolink: true,
-    query: ['q', 'status', 'violation_type', 'material']
+    query: ['q', 'status', 'violation_type', 'material', 'epoch']
   })
 </script>
 
@@ -17,6 +17,7 @@
       <a href="/items">Предметы</a>
       <a href="/explorers">Исследователи</a>
       <a href="/exhibitions">Выставки</a>
+      <a href="/sql">SQL</a>
     </nav>
   </header>
 
@@ -42,7 +43,11 @@
                 ? 'explorers'
                 : (section === 'exhibitions' && id)
                   ? 'exhibition-detail'
-                  : 'exhibitions'
+                  : (section === 'exhibitions')
+                    ? 'exhibitions'
+                    : (section === 'sql')
+                      ? 'sql'
+                      : 'exhibitions'
       this.mount(view, 'article')
     })
 

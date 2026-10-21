@@ -14,6 +14,7 @@
 | `status` | Точное совпадение: `in_storage` / `on_exhibition` |
 | `violation_type` | Точное совпадение: `gravity` / `time` / `logic` / `geometry` / `sound` |
 | `material` | Поиск по материалу (без учёта регистра) |
+| `epoch` | Точное совпадение с эпохой |
 
 **Ответ `200`:**
 ```json
@@ -131,6 +132,23 @@
 
 ## Сводка и здоровье
 
+### `GET /api/meta`
+
+Единый справочник значений для форм и фильтров:
+
+```json
+{
+  "violation_types": [
+    { "value": "gravity", "label": "гравитация" },
+    { "value": "time", "label": "время" }
+  ],
+  "materials": ["гранит", "латунь", "..."],
+  "epochs": ["викторианская", "мезозой", "..."]
+}
+```
+
+`violation_types` — фиксированный список; `materials` и `epochs` — различные непустые значения из таблицы `impossible_objects`.
+
 ### `GET /api/stats`
 
 ```json
@@ -149,6 +167,36 @@
 ### `GET /api/health`
 
 Проверка доступности БД (`SELECT 1`). Ответ `200`: `{"status": "ok", "db": "ok"}`. При недоступной БД — `503`: `{"status": "error", "db": "unreachable"}`.
+
+## SQL-консоль
+
+### `POST /api/sql`
+
+Выполняет **read-only** SQL-запрос к базе музея.
+
+**Тело запроса:**
+```json
+{ "query": "SELECT name, status FROM impossible_objects LIMIT 10" }
+```
+
+**Ответ `200`:**
+```json
+{
+  "columns": ["name", "status"],
+  "rows": [
+    { "name": "Шар, падающий вверх", "status": "on_exhibition" }
+  ],
+  "count": 1
+}
+```
+
+**Ограничения:**
+- разрешены только запросы, начинающиеся с `SELECT`, `WITH`, `EXPLAIN`, `SHOW`
+- запись, изменение и удаление (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, ...) запрещены
+- максимум 1000 строк в ответе
+- длина запроса — до 5000 символов
+
+**Ошибки:** `400` — пустой запрос, превышение лимитов, запрещённый тип запроса или ошибка SQL.
 
 ## Коды ошибок
 

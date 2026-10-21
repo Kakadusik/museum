@@ -23,9 +23,11 @@
         <td>{ exhibition.location || '—' }</td>
         <td>{ exhibition.description || '—' }</td>
         <td>{ exhibition.objects_count }</td>
-        <td style="white-space:nowrap">
-          <button class="btn-small" :onclick="openEdit(exhibition)">Изменить</button>
-          <button class="btn-small btn-danger" :onclick="openDelete(exhibition)">Удалить</button>
+        <td class="actions-cell">
+          <div class="actions-buttons">
+            <button popovertarget="edit-exhibition" class="btn-small" :onclick="selectExhibition(exhibition)">Изменить</button>
+            <button popovertarget="delete-exhibition" class="btn-small btn-danger" :onclick="selectExhibition(exhibition)">Удалить</button>
+          </div>
         </td>
       </tr>
     </tbody>
@@ -35,15 +37,15 @@
     <h2 style="margin-top:0">Новая выставка</h2>
     <form class="grid" :onsubmit="createExhibition">
       <label>Название *
-        <input name="title" required>
+        <input name="title" required minlength="2" maxlength="200">
       </label>
       <div class="row">
         <label>Локация
-          <input name="location">
+          <input name="location" maxlength="200">
         </label>
       </div>
       <label>Описание
-        <textarea name="description"></textarea>
+        <textarea name="description" maxlength="2000"></textarea>
       </label>
       <div class="dialog-actions">
         <button type="button" onclick="this.closest('dialog').hidePopover()">Отмена</button>
@@ -52,31 +54,31 @@
     </form>
   </dialog>
 
-  <dialog id="edit-exhibition">
+  <dialog id="edit-exhibition" popover>
     <h2 style="margin-top:0">Редактировать выставку</h2>
     <form class="grid" :onsubmit="updateExhibition">
       <label>Название *
-        <input name="title" value="{ selected.title }" required>
+        <input name="title" value="{ selected.title }" required minlength="2" maxlength="200">
       </label>
       <label>Локация
-        <input name="location" value="{ selected.location }">
+        <input name="location" value="{ selected.location }" maxlength="200">
       </label>
       <label>Описание
-        <textarea name="description">{ selected.description }</textarea>
+        <textarea name="description" maxlength="2000">{ selected.description }</textarea>
       </label>
       <div class="dialog-actions">
-        <button type="button" onclick="this.closest('dialog').close()">Отмена</button>
+        <button type="button" onclick="this.closest('dialog').hidePopover()">Отмена</button>
         <button type="submit" class="btn-primary">Сохранить</button>
       </div>
     </form>
   </dialog>
 
-  <dialog id="delete-exhibition">
+  <dialog id="delete-exhibition" popover>
     <h2 style="margin-top:0">Удалить выставку?</h2>
     <p>«{ selected.title }» будет удалена, экспонаты останутся в фондах.</p>
     <form :onsubmit="deleteExhibition">
       <div class="dialog-actions">
-        <button type="button" onclick="this.closest('dialog').close()">Отмена</button>
+        <button type="button" onclick="this.closest('dialog').hidePopover()">Отмена</button>
         <button type="submit" class="btn-danger">Удалить</button>
       </div>
     </form>
@@ -86,14 +88,13 @@
     this.exhibitions = []
     this.selected = {}
 
-    openEdit(exhibition) {
+    selectExhibition(exhibition) {
       this.update({ selected: exhibition })
-      this.root.querySelector('#edit-exhibition').showModal()
-    }
-
-    openDelete(exhibition) {
-      this.update({ selected: exhibition })
-      this.root.querySelector('#delete-exhibition').showModal()
+      const form = this.root.querySelector('#edit-exhibition form')
+      if (!form) return
+      form.elements.title.value = exhibition.title || ''
+      form.elements.location.value = exhibition.location || ''
+      form.elements.description.value = exhibition.description || ''
     }
 
     async load() {
@@ -124,7 +125,7 @@
         body: JSON.stringify(data)
       })
       if (res.ok) {
-        this.root.querySelector('#edit-exhibition').close()
+        this.root.querySelector('#edit-exhibition').hidePopover()
         this.load()
       }
     }
@@ -132,7 +133,7 @@
     async deleteExhibition(e) {
       const res = await fetch(`/api/exhibitions/${this.selected.id}`, { method: 'DELETE' })
       if (res.ok) {
-        this.root.querySelector('#delete-exhibition').close()
+        this.root.querySelector('#delete-exhibition').hidePopover()
         this.load()
       }
     }

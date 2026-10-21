@@ -16,6 +16,7 @@ async def list_items(request):
     status = request.args.get("status")
     violation_type = request.args.get("violation_type")
     material = request.args.get("material")
+    epoch = request.args.get("epoch")
 
     if q:
         filters.append(Q(name__icontains=q) | Q(description__icontains=q))
@@ -25,6 +26,8 @@ async def list_items(request):
         filters.append(Q(violation_type=violation_type))
     if material:
         filters.append(Q(material__icontains=material))
+    if epoch:
+        filters.append(Q(epoch=epoch))
 
     query = ImpossibleObject.all()
     if filters:

@@ -30,7 +30,7 @@ explorers ───────┐  1:N    impossible_objects ───── N:
 
 | Метод | Путь | Описание |
 |---|---|---|
-| GET | `/api/items` | Список предметов (фильтры: `q`, `status`, `violation_type`, `material`) |
+| GET | `/api/items` | Список предметов (фильтры: `q`, `status`, `violation_type`, `material`, `epoch`) |
 | GET | `/api/items/:id` | Детали предмета |
 | POST | `/api/items` | Добавить предмет |
 | PUT | `/api/items/:id` | Обновить предмет |
@@ -46,6 +46,7 @@ explorers ───────┐  1:N    impossible_objects ───── N:
 | PUT | `/api/exhibitions/:id` | Обновить выставку |
 | DELETE | `/api/exhibitions/:id` | Удалить выставку |
 | GET | `/api/stats` | Сводка по фондам |
+| GET | `/api/meta` | Справочник типов нарушений, материалов и эпох |
 | GET | `/api/health` | Healthcheck |
 
 ## Процесс работы

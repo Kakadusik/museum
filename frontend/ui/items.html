@@ -15,7 +15,7 @@
     <input type="search" name="q" value="{ q }" placeholder="Поиск по названию или описанию..." :oninput="handleFilter">
     <select name="violation_type" :onchange="handleFilter">
       <option value="">Все типы</option>
-      <option :each="vt in violationTypes" value="{ vt }" :selected="violation_type == vt">{ violationLabel(vt) }</option>
+      <option :each="vt in violationTypes" value="{ vt.value }" :selected="violation_type == vt.value">{ vt.label }</option>
     </select>
     <select name="status" :onchange="handleFilter">
       <option value="">Все статусы</option>
@@ -25,6 +25,10 @@
     <select name="material" :onchange="handleFilter">
       <option value="">Все материалы</option>
       <option :each="mat in materials" value="{ mat }" :selected="material == mat">{ mat }</option>
+    </select>
+    <select name="epoch" :onchange="handleFilter">
+      <option value="">Все эпохи</option>
+      <option :each="ep in epochs" value="{ ep }" :selected="epoch == ep">{ ep }</option>
     </select>
   </form>
 
@@ -43,11 +47,14 @@
     <h2 style="margin-top:0">Новый предмет</h2>
     <form class="grid" :onsubmit="createItem">
       <label>Название *
-        <input name="name" required>
+        <input name="name" required minlength="2" maxlength="200">
       </label>
       <div class="row">
         <label>Тип нарушения *
-          <input name="violation_type" required placeholder="gravity / time / logic / ...">
+          <select name="violation_type" required>
+            <option value="">Выберите тип</option>
+            <option :each="vt in violationTypes" value="{ vt.value }">{ vt.label }</option>
+          </select>
         </label>
         <label>Статус
           <select name="status">
@@ -57,21 +64,33 @@
         </label>
       </div>
       <label>Описание
-        <textarea name="description"></textarea>
+        <textarea name="description" maxlength="2000"></textarea>
       </label>
       <div class="row">
         <label>Материал
-          <input name="material">
+          <select name="material">
+            <option value="">— не указан —</option>
+            <option :each="mat in materials" value="{ mat }">{ mat }</option>
+          </select>
         </label>
         <label>Эпоха
-          <input name="epoch">
+          <select name="epoch">
+            <option value="">— не указана —</option>
+            <option :each="ep in epochs" value="{ ep }">{ ep }</option>
+          </select>
         </label>
       </div>
       <label>Происхождение
-        <input name="origin">
+        <input name="origin" maxlength="240">
       </label>
-      <label>Исследователь (ID)
-        <input name="explorer_id" type="number" placeholder="пусто = не указан">
+      <label>Исследователь
+        <input id="explorer-input" type="text" :value="explorerQuery" :oninput="onExplorerInput"
+          placeholder="Начните вводить имя..." autocomplete="off">
+        <div class="autocomplete-dropdown" :if="explorerMatches.length">
+          <div class="autocomplete-item" :each="ex in explorerMatches" :onclick="pickExplorer(ex)">
+            { ex.name } <span>({ ex.specialization })</span>
+          </div>
+        </div>
       </label>
       <div class="dialog-actions">
         <button type="button" onclick="this.closest('dialog').hidePopover()">Отмена</button>
@@ -83,21 +102,53 @@
   <script>
     this.items = []
     this.loading = false
-    this.violationTypes = ['gravity', 'time', 'logic', 'geometry', 'sound']
+    this.violationTypes = [
+      { value: 'gravity', label: 'гравитация' },
+      { value: 'time', label: 'время' },
+      { value: 'logic', label: 'логика' },
+      { value: 'geometry', label: 'геометрия' },
+      { value: 'sound', label: 'звук' }
+    ]
     this.materials = []
+    this.epochs = []
+    this.explorerOptions = []
+    this.explorerQuery = ''
+    this.explorerMatches = []
+    this.selectedExplorerId = ''
 
     sync() {
       this.update({
         q: state.q || '',
         status: state.status || '',
         violation_type: state.violation_type || '',
-        material: state.material || ''
+        material: state.material || '',
+        epoch: state.epoch || ''
       })
+      this.applySelectValues()
+    }
+
+    applySelectValues() {
+      const form = this.root.querySelector('form.filters')
+      if (!form) return
+      form.elements.status.value = this.status || ''
+      form.elements.violation_type.value = this.violation_type || ''
+      form.elements.material.value = this.material || ''
+      form.elements.epoch.value = this.epoch || ''
     }
 
     violationLabel(t) {
-      const labels = { gravity: 'гравитация', time: 'время', logic: 'логика', geometry: 'геометрия', sound: 'звук' }
-      return labels[t] || t
+      const found = this.violationTypes.find(v => v.value === t)
+      return found ? found.label : t
+    }
+
+    async loadMeta() {
+      const meta = await fetch('/api/meta').then(r => r.json())
+      this.update({
+        violationTypes: meta.violation_types || this.violationTypes,
+        materials: meta.materials || [],
+        epochs: meta.epochs || []
+      })
+      this.applySelectValues()
     }
 
     handleFilter(e) {
@@ -118,15 +169,51 @@
       if (this.status) params.set('status', this.status)
       if (this.violation_type) params.set('violation_type', this.violation_type)
       if (this.material) params.set('material', this.material)
+      if (this.epoch) params.set('epoch', this.epoch)
       const data = await fetch(`/api/items?${params}`).then(r => r.json())
-      this.materials = [...new Set(data.items.map(i => i.material).filter(Boolean))]
       this.update({ items: data.items, loading: false })
+      this.applySelectValues()
+    }
+
+    async loadExplorers() {
+      const data = await fetch('/api/explorers').then(r => r.json())
+      this.update({ explorerOptions: data.explorers })
+    }
+
+    onExplorerInput(e) {
+      const q = e.target.value
+      const query = q.trim().toLowerCase()
+      const matches = query
+        ? this.explorerOptions.filter(ex => ex.name.toLowerCase().includes(query))
+        : []
+      this.update({ explorerQuery: q, explorerMatches: matches, selectedExplorerId: '' })
+    }
+
+    pickExplorer(ex) {
+      this.update({
+        selectedExplorerId: ex.id,
+        explorerQuery: ex.name,
+        explorerMatches: []
+      })
+      const input = this.root.querySelector('#explorer-input')
+      if (input) input.value = ex.name
+    }
+
+    clearExplorer() {
+      this.update({ selectedExplorerId: '', explorerQuery: '', explorerMatches: [] })
+      const input = this.root.querySelector('#explorer-input')
+      if (input) input.value = ''
     }
 
     async createItem(e) {
+      e.preventDefault()
       const data = Object.fromEntries(new FormData(e.target))
-      if (data.explorer_id) {
-        data.explorer_id = parseInt(data.explorer_id, 10)
+      if (this.explorerQuery.trim() && !this.selectedExplorerId) {
+        alert('Выберите исследователя из списка или оставьте поле пустым')
+        return
+      }
+      if (this.selectedExplorerId) {
+        data.explorer_id = parseInt(this.selectedExplorerId, 10)
       } else {
         delete data.explorer_id
       }
@@ -137,13 +224,17 @@
       })
       if (res.ok) {
         document.getElementById('create-item').hidePopover()
+        e.target.reset()
+        this.clearExplorer()
         this.fetchItems()
       }
     }
 
     async mounted() {
       this.sync()
+      this.loadMeta()
       this.fetchItems()
+      this.loadExplorers()
     }
   </script>
 </div>

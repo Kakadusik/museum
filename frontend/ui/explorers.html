@@ -25,9 +25,11 @@
         <td>{ explorer.nationality || '—' }</td>
         <td>{ explorer.birth_year || '—' }</td>
         <td>{ explorer.objects_count }</td>
-        <td style="white-space:nowrap">
-          <button class="btn-small" :onclick="openEdit(explorer)">Изменить</button>
-          <button class="btn-small btn-danger" :onclick="openDelete(explorer)">Удалить</button>
+        <td class="actions-cell">
+          <div class="actions-buttons">
+            <button popovertarget="edit-explorer" class="btn-small" :onclick="selectExplorer(explorer)">Изменить</button>
+            <button popovertarget="delete-explorer" class="btn-small btn-danger" :onclick="selectExplorer(explorer)">Удалить</button>
+          </div>
         </td>
       </tr>
     </tbody>
@@ -38,22 +40,22 @@
     <form class="grid" :onsubmit="createExplorer">
       <div class="row">
         <label>Имя *
-          <input name="name" required>
+          <input name="name" required minlength="2" maxlength="160">
         </label>
         <label>Специализация *
-          <input name="specialization" required>
+          <input name="specialization" required minlength="2" maxlength="160">
         </label>
       </div>
       <div class="row">
         <label>Год рождения
-          <input name="birth_year" type="number">
+          <input name="birth_year" type="number" min="1" max="2100">
         </label>
         <label>Национальность
-          <input name="nationality">
+          <input name="nationality" maxlength="120">
         </label>
       </div>
       <label>Биография
-        <textarea name="biography"></textarea>
+        <textarea name="biography" maxlength="2000"></textarea>
       </label>
       <div class="dialog-actions">
         <button type="button" onclick="this.closest('dialog').hidePopover()">Отмена</button>
@@ -62,41 +64,41 @@
     </form>
   </dialog>
 
-  <dialog id="edit-explorer">
+  <dialog id="edit-explorer" popover>
     <h2 style="margin-top:0">Редактировать исследователя</h2>
     <form class="grid" :onsubmit="updateExplorer">
       <div class="row">
         <label>Имя *
-          <input name="name" value="{ selected.name }" required>
+          <input name="name" value="{ selected.name }" required minlength="2" maxlength="160">
         </label>
         <label>Специализация *
-          <input name="specialization" value="{ selected.specialization }" required>
+          <input name="specialization" value="{ selected.specialization }" required minlength="2" maxlength="160">
         </label>
       </div>
       <div class="row">
         <label>Год рождения
-          <input name="birth_year" type="number" value="{ selected.birth_year }">
+          <input name="birth_year" type="number" min="1" max="2100" value="{ selected.birth_year }">
         </label>
         <label>Национальность
-          <input name="nationality" value="{ selected.nationality }">
+          <input name="nationality" value="{ selected.nationality }" maxlength="120">
         </label>
       </div>
       <label>Биография
-        <textarea name="biography">{ selected.biography }</textarea>
+        <textarea name="biography" maxlength="2000">{ selected.biography }</textarea>
       </label>
       <div class="dialog-actions">
-        <button type="button" onclick="this.closest('dialog').close()">Отмена</button>
+        <button type="button" onclick="this.closest('dialog').hidePopover()">Отмена</button>
         <button type="submit" class="btn-primary">Сохранить</button>
       </div>
     </form>
   </dialog>
 
-  <dialog id="delete-explorer">
+  <dialog id="delete-explorer" popover>
     <h2 style="margin-top:0">Удалить исследователя?</h2>
     <p>«{ selected.name }» будет удалён. Исследователи, нашедшие предметы, не удаляются.</p>
     <form :onsubmit="deleteExplorer">
       <div class="dialog-actions">
-        <button type="button" onclick="this.closest('dialog').close()">Отмена</button>
+        <button type="button" onclick="this.closest('dialog').hidePopover()">Отмена</button>
         <button type="submit" class="btn-danger">Удалить</button>
       </div>
     </form>
@@ -106,14 +108,15 @@
     this.explorers = []
     this.selected = {}
 
-    openEdit(explorer) {
+    selectExplorer(explorer) {
       this.update({ selected: explorer })
-      this.root.querySelector('#edit-explorer').showModal()
-    }
-
-    openDelete(explorer) {
-      this.update({ selected: explorer })
-      this.root.querySelector('#delete-explorer').showModal()
+      const form = this.root.querySelector('#edit-explorer form')
+      if (!form) return
+      form.elements.name.value = explorer.name || ''
+      form.elements.specialization.value = explorer.specialization || ''
+      form.elements.birth_year.value = explorer.birth_year || ''
+      form.elements.nationality.value = explorer.nationality || ''
+      form.elements.biography.value = explorer.biography || ''
     }
 
     async load() {
@@ -145,7 +148,7 @@
         body: JSON.stringify(data)
       })
       if (res.ok) {
-        this.root.querySelector('#edit-explorer').close()
+        this.root.querySelector('#edit-explorer').hidePopover()
         this.load()
       }
     }
@@ -153,7 +156,7 @@
     async deleteExplorer(e) {
       const res = await fetch(`/api/explorers/${this.selected.id}`, { method: 'DELETE' })
       if (res.ok) {
-        this.root.querySelector('#delete-explorer').close()
+        this.root.querySelector('#delete-explorer').hidePopover()
         this.load()
       }
     }

@@ -1,0 +1,94 @@
+<!doctype dhtml lib>
+
+<script>
+  import { state } from 'state'
+</script>
+
+<!-- sql console -->
+<div :is="sql">
+  <h1>SQL-запрос</h1>
+  <p class="subtitle">Read-only доступ к базе музея (SELECT, WITH, EXPLAIN, SHOW)</p>
+
+  <form :onsubmit="runQuery">
+    <label>Запрос
+      <textarea name="query" rows="6" required maxlength="5000"
+        placeholder="SELECT * FROM impossible_objects LIMIT 10;"></textarea>
+    </label>
+    <div class="dialog-actions">
+      <button type="submit" class="btn-primary">Выполнить</button>
+    </div>
+  </form>
+
+  <div class="examples">
+    <span>Примеры:</span>
+    <button type="button" class="btn-small" :onclick="setExample(0)">Все предметы</button>
+    <button type="button" class="btn-small" :onclick="setExample(1)">По статусу</button>
+    <button type="button" class="btn-small" :onclick="setExample(2)">Связи</button>
+  </div>
+
+  <p :if="error" class="error">{ error }</p>
+
+  <div :if="rows.length">
+    <h2>Результат ({ count } строк)</h2>
+    <table>
+      <thead>
+        <tr><th :each="col in columns">{ col }</th></tr>
+      </thead>
+      <tbody>
+        <tr :each="row in rows">
+          <td :each="cell in row">{ cell }</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p :if="!rows.length && !error && executed" class="empty">Запрос выполнен — 0 строк.</p>
+
+  <script>
+    this.columns = []
+    this.rows = []
+    this.count = 0
+    this.error = ''
+    this.executed = false
+
+    this.examples = [
+      'SELECT * FROM impossible_objects LIMIT 10',
+      `SELECT name, status FROM impossible_objects WHERE status = 'on_exhibition'`,
+      `SELECT o.name AS object, e.title AS exhibition
+FROM object_exhibitions oe
+JOIN impossible_objects o ON o.id = oe.planned_object_id
+JOIN exhibitions e ON e.id = oe.exhibition_id
+LIMIT 20`,
+    ]
+
+    setExample(i) {
+      this.root.querySelector('textarea[name=query]').value = this.examples[i]
+    }
+
+    async runQuery(e) {
+      e.preventDefault()
+      const data = Object.fromEntries(new FormData(e.target))
+      this.error = ''
+      this.executed = false
+      let res
+      try {
+        res = await fetch('/api/sql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: data.query })
+        })
+      } catch (err) {
+        this.update({ error: 'Сеть недоступна: ' + err.message, rows: [], columns: [], count: 0, executed: true })
+        return
+      }
+      const result = await res.json().catch(() => ({}))
+      if (!res.ok || result.error) {
+        const msg = result.error || result.message || result.description || ('Ошибка сервера: ' + res.status)
+        this.update({ error: msg, rows: [], columns: [], count: 0, executed: true })
+        return
+      }
+      const columns = result.columns || []
+      const rows = (result.rows || []).map(r => columns.map(c => r[c]))
+      this.update({ columns, rows, count: result.count || rows.length, error: '', executed: true })
+    }
+  </script>
+</div>

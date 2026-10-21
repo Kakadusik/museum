@@ -46,11 +46,14 @@
       <h2 style="margin-top:0">Редактировать предмет</h2>
       <form class="grid" :onsubmit="updateItem">
         <label>Название *
-          <input name="name" value="{ item.name }" required>
+          <input name="name" value="{ item.name }" required minlength="2" maxlength="200">
         </label>
         <div class="row">
           <label>Тип нарушения *
-            <input name="violation_type" value="{ item.violation_type }" required>
+            <select name="violation_type" required>
+              <option value="">Выберите тип</option>
+              <option :each="vt in violationTypes" value="{ vt.value }" :selected="item.violation_type == vt.value">{ vt.label }</option>
+            </select>
           </label>
           <label>Статус
             <select name="status">
@@ -60,18 +63,24 @@
           </label>
         </div>
         <label>Описание
-          <textarea name="description">{ item.description }</textarea>
+          <textarea name="description" maxlength="2000">{ item.description }</textarea>
         </label>
         <div class="row">
           <label>Материал
-            <input name="material" value="{ item.material }">
+            <select name="material">
+              <option value="">— не указан —</option>
+              <option :each="mat in materials" value="{ mat }" :selected="item.material == mat">{ mat }</option>
+            </select>
           </label>
           <label>Эпоха
-            <input name="epoch" value="{ item.epoch }">
+            <select name="epoch">
+              <option value="">— не указана —</option>
+              <option :each="ep in epochs" value="{ ep }" :selected="item.epoch == ep">{ ep }</option>
+            </select>
           </label>
         </div>
         <label>Происхождение
-          <input name="origin" value="{ item.origin }">
+          <input name="origin" value="{ item.origin }" maxlength="240">
         </label>
         <label>Исследователь
           <select name="explorer_id">
@@ -115,10 +124,19 @@
     this.item = null
     this.explorers = []
     this.exhibitions = []
+    this.violationTypes = [
+      { value: 'gravity', label: 'гравитация' },
+      { value: 'time', label: 'время' },
+      { value: 'logic', label: 'логика' },
+      { value: 'geometry', label: 'геометрия' },
+      { value: 'sound', label: 'звук' }
+    ]
+    this.materials = []
+    this.epochs = []
 
     violationLabel(t) {
-      const labels = { gravity: 'гравитация', time: 'время', logic: 'логика', geometry: 'геометрия', sound: 'звук' }
-      return labels[t] || t
+      const found = this.violationTypes.find(v => v.value === t)
+      return found ? found.label : t
     }
 
     state.on('id', async ({ id }) => {
@@ -128,11 +146,18 @@
     })
 
     async mounted() {
-      const [explorers, exhibitions] = await Promise.all([
+      const [explorers, exhibitions, meta] = await Promise.all([
         fetch('/api/explorers').then(r => r.json()),
-        fetch('/api/exhibitions').then(r => r.json())
+        fetch('/api/exhibitions').then(r => r.json()),
+        fetch('/api/meta').then(r => r.json())
       ])
-      this.update({ explorers: explorers.explorers, exhibitions: exhibitions.exhibitions })
+      this.update({
+        explorers: explorers.explorers,
+        exhibitions: exhibitions.exhibitions,
+        violationTypes: meta.violation_types || this.violationTypes,
+        materials: meta.materials || [],
+        epochs: meta.epochs || []
+      })
     }
 
     async updateItem(e) {
