@@ -1,0 +1,36 @@
+name: museum
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-museum}
+      POSTGRES_USER: ${POSTGRES_USER:-museum}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD в .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-museum} -d ${POSTGRES_DB:-museum}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  app:
+    image: ${DOCKERHUB_USER:?Задайте DOCKERHUB_USER в .env}/museum:${IMAGE_TAG:-latest}
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-museum}:${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD в .env}@db:5432/${POSTGRES_DB:-museum}
+      HOST: 0.0.0.0
+      PORT: 8000
+      DEBUG: 0
+      AUTO_RELOAD: 0
+      FRONTEND_DIST: /app/frontend/.dist
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -101,6 +101,16 @@ else delete data.explorer_id
 
 **Где применено:** `backend/serializers.py`, `frontend/ui/item-detail.html`.
 
+## 9. Docker: healthcheck PostgreSQL и origin для e2e
+
+**Гонка при старте:** `pg_isready` без `-h` проверяет Unix-сокет. При инициализации пустого тома `postgres:16-alpine` поднимает временный сервер на сокете, и healthcheck успевает стать `healthy` раньше, чем основной сервер начнёт слушать TCP `5432`. Бэкенд стартует, получает `ConnectionRefusedError` и перезапускается.
+
+**Обход:** проверять TCP: `pg_isready -h 127.0.0.1 -U ... -d ...`. Тогда `depends_on: condition: service_healthy` действительно ждёт готовности БД.
+
+**Dev e2e:** в Docker dev UI отдаёт Nue (`:4000`), а Sanic (`:8010`) — только API и не раздаёт `frontend/.dist`. `e2e_test.py` запускать на `:4000` (статика + прокси), а не на `:8010`. В prod статику и API отдаёт один Sanic (`:8000`).
+
+**Конфликт портов:** локальный `python app.py` на `127.0.0.1:8010` не даёт Docker опубликовать IPv4-порт (Docker занимает только IPv6 `::`). Остановить локальный процесс и пересоздать контейнер: `docker compose down && docker compose up -d`.
+
 ## Примечание по версиям
 
 Актуальная версия nuekit на npm — `2.0.0-beta.2`, более свежих нет. При обновлении Nue в будущем проверить, что баги 1–4 исчезли, и убрать обходы.

@@ -1,0 +1,10 @@
+meta:
+  title: Музей Невозможных Предметов
+  description: Архив предметов, нарушающих законы физики, времени и логики
+  theme_color: "#1a1a2e"
+
+server:
+  url: http://backend:8000
+  routes: [/api/]
+
+port: 4000
