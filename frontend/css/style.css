@@ -261,6 +261,12 @@
     h2 { margin: 0 0 .6em; }
   }
 
+  .stats-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4em;
+  }
+
   .stat-list {
     background: var(--card);
     border: 1px solid var(--border);
@@ -278,6 +284,8 @@
       .stat-key {
         color: var(--text-dim);
         text-transform: capitalize;
+
+        .status { text-transform: none; }
       }
 
       .stat-val {

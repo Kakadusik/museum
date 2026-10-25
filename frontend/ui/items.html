@@ -14,13 +14,12 @@
   <form class="filters" :onsubmit="applyFilters">
     <input type="search" name="q" value="{ q }" placeholder="Поиск по названию или описанию..." :oninput="handleFilter">
     <select name="violation_type" :onchange="handleFilter">
-      <option value="">Все типы</option>
+      <option value="">Все области науки</option>
       <option :each="vt in violationTypes" value="{ vt.value }" :selected="violation_type == vt.value">{ vt.label }</option>
     </select>
     <select name="status" :onchange="handleFilter">
       <option value="">Все статусы</option>
-      <option value="on_exhibition" :selected="status == 'on_exhibition'">На выставке</option>
-      <option value="in_storage" :selected="status == 'in_storage'">В запаснике</option>
+      <option :each="st in statuses" value="{ st.value }" :selected="status == st.value">{ st.label }</option>
     </select>
     <select name="material" :onchange="handleFilter">
       <option value="">Все материалы</option>
@@ -35,7 +34,7 @@
   <div :if="items.length && !loading" class="items-grid">
     <div class="item-card" :each="item in items">
       <a href="/items/{ item.id }"><h3>{ item.name }</h3></a>
-      <span class="status { item.status }">{ item.status == 'on_exhibition' ? 'На выставке' : 'В запаснике' }</span>
+      <span class="status { item.status }">{ item.status_label || item.status }</span>
       <p class="meta">{ violationLabel(item.violation_type) }{ item.material ? ' · ' + item.material : '' }{ item.explorer ? ' · ' + item.explorer.name : '' }</p>
       <p class="desc">{ item.description || 'Без описания' }</p>
     </div>
@@ -50,16 +49,15 @@
         <input name="name" required minlength="2" maxlength="200">
       </label>
       <div class="row">
-        <label>Тип нарушения *
+        <label>Область науки *
           <select name="violation_type" required>
-            <option value="">Выберите тип</option>
+            <option value="">Выберите область</option>
             <option :each="vt in violationTypes" value="{ vt.value }">{ vt.label }</option>
           </select>
         </label>
         <label>Статус
           <select name="status">
-            <option value="in_storage">В запаснике</option>
-            <option value="on_exhibition">На выставке</option>
+            <option :each="st in statuses" value="{ st.value }" :selected="st.value == 'in_storage'">{ st.label }</option>
           </select>
         </label>
       </div>
@@ -83,6 +81,17 @@
       <label>Происхождение
         <input name="origin" maxlength="240">
       </label>
+      <label>Научное объяснение
+        <textarea name="scientific_explanation" maxlength="4000"></textarea>
+      </label>
+      <div class="row">
+        <label>Источник — название
+          <input name="source_title" maxlength="200">
+        </label>
+        <label>Источник — ссылка
+          <input name="source_url" maxlength="400" placeholder="https://doi.org/...">
+        </label>
+      </div>
       <label>Исследователь
         <input id="explorer-input" type="text" :value="explorerQuery" :oninput="onExplorerInput"
           placeholder="Начните вводить имя..." autocomplete="off">
@@ -110,11 +119,15 @@
     this.items = []
     this.loading = false
     this.violationTypes = [
-      { value: 'gravity', label: 'гравитация' },
-      { value: 'time', label: 'время' },
-      { value: 'logic', label: 'логика' },
-      { value: 'geometry', label: 'геометрия' },
-      { value: 'sound', label: 'звук' }
+      { value: 'astronomy', label: 'астрономия' },
+      { value: 'materials', label: 'материаловедение' },
+      { value: 'metallurgy', label: 'металлургия' },
+      { value: 'engineering', label: 'инженерия' },
+      { value: 'geology', label: 'геология' }
+    ]
+    this.statuses = [
+      { value: 'on_exhibition', label: 'На выставке' },
+      { value: 'in_storage', label: 'В хранилище' }
     ]
     this.materials = []
     this.epochs = []
@@ -153,6 +166,7 @@
       const meta = await fetch('/api/meta').then(r => r.json())
       this.update({
         violationTypes: meta.violation_types || this.violationTypes,
+        statuses: meta.statuses || this.statuses,
         materials: meta.materials || [],
         epochs: meta.epochs || []
       })

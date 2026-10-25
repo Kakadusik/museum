@@ -12,7 +12,7 @@
 |---|---|
 | `q` | Поиск по названию или описанию (без учёта регистра) |
 | `status` | Точное совпадение: `in_storage` / `on_exhibition` |
-| `violation_type` | Точное совпадение: `gravity` / `time` / `logic` / `geometry` / `sound` |
+| `violation_type` | Область науки: `astronomy` / `materials` / `metallurgy` / `engineering` / `geology` |
 | `material` | Поиск по материалу (без учёта регистра) |
 | `epoch` | Точное совпадение с эпохой |
 
@@ -22,18 +22,22 @@
   "items": [
     {
       "id": 1,
-      "name": "Шар, падающий вверх",
-      "description": "Латунный шар...",
-      "violation_type": "gravity",
-      "material": "латунь",
-      "epoch": "неопределённая",
-      "origin": "чердак обсерватории Архунья",
+      "name": "Антикитерский механизм",
+      "description": "Бронзовый прибор II–I вв. до н.э. ...",
+      "violation_type": "astronomy",
+      "material": "бронза",
+      "epoch": "II–I вв. до н.э.",
+      "origin": "Эгейское море, у острова Антикитера",
+      "scientific_explanation": "Механизм был моделью Солнечной системы ...",
+      "source_title": "Decoding the ancient Greek astronomical calculator ...",
+      "source_url": "https://doi.org/10.1038/nature05357",
       "status": "on_exhibition",
+      "status_label": "На выставке",
       "created_at": "2026-09-12T17:13:00",
-      "explorer": { "id": 1, "name": "Аристарх Осколков", "specialization": "Парадоксология" },
+      "explorer": { "id": 1, "name": "Тони Фрит", "specialization": "История античной астрономии и механики" },
       "exhibition_ids": [1],
       "exhibitions": [
-        { "id": 1, "title": "Нарушенная гравитация", "location": "Зал «Анти-небо»" }
+        { "id": 1, "title": "Небо древних", "location": "Зал астрономии" }
       ]
     }
   ]
@@ -50,7 +54,7 @@
 
 **Обязательные поля:** `name`, `violation_type`.
 
-**Опциональные поля:** `description`, `material`, `epoch`, `origin`, `status` (по умолчанию `in_storage`), `explorer_id`, `exhibition_ids` (массив ID выставок).
+**Опциональные поля:** `description`, `material`, `epoch`, `origin`, `scientific_explanation`, `source_title`, `source_url`, `status` (по умолчанию `in_storage`), `explorer_id`, `exhibition_ids` (массив ID выставок).
 
 **Ответ `201`** — созданный предмет. Ошибки:
 - `400` — не заполнены обязательные поля или не найдены исследователь/выставка.
@@ -75,8 +79,8 @@
 ```json
 {
   "explorers": [
-    { "id": 1, "name": "Аристарх Осколков", "specialization": "Парадоксология",
-      "birth_year": 1972, "nationality": "русский", "biography": "...", "objects_count": 3 }
+    { "id": 1, "name": "Тони Фрит", "specialization": "История античной астрономии и механики",
+      "birth_year": null, "nationality": "британский", "biography": "...", "objects_count": 1 }
   ]
 }
 ```
@@ -109,8 +113,8 @@
 ```json
 {
   "exhibitions": [
-    { "id": 1, "title": "Нарушенная гравитация", "description": "...",
-      "location": "Зал «Анти-небо»", "objects_count": 2 }
+    { "id": 1, "title": "Небо древних", "description": "...",
+      "location": "Зал астрономии", "objects_count": 2 }
   ]
 }
 ```
@@ -140,26 +144,39 @@
 ```json
 {
   "violation_types": [
-    { "value": "gravity", "label": "гравитация" },
-    { "value": "time", "label": "время" }
+    { "value": "astronomy", "label": "астрономия" },
+    { "value": "materials", "label": "материаловедение" }
   ],
-  "materials": ["гранит", "латунь", "..."],
-  "epochs": ["викторианская", "мезозой", "..."]
+  "science_fields": [
+    { "value": "astronomy", "label": "астрономия" },
+    { "value": "materials", "label": "материаловедение" }
+  ],
+  "statuses": [
+    { "value": "on_exhibition", "label": "На выставке" },
+    { "value": "in_storage", "label": "В хранилище" }
+  ],
+  "materials": ["бронза", "стекло с наночастицами золота и серебра", "..."],
+  "epochs": ["II–I вв. до н.э.", "IV в. н.э.", "..."]
 }
 ```
 
-`violation_types` — фиксированный список; `materials` и `epochs` — различные непустые значения из таблицы `impossible_objects`.
+`violation_types` и `science_fields` — один и тот же фиксированный справочник
+областей науки (поле называется `violation_type` для совместимости API).
+`statuses` — единый источник подписей статусов; ключи `on_exhibition` и
+`in_storage` не меняются. `materials` и `epochs` — различные непустые значения
+из таблицы `impossible_objects`.
 
 ### `GET /api/stats`
 
 ```json
 {
   "total_objects": 7,
-  "total_explorers": 3,
+  "total_explorers": 7,
   "total_exhibitions": 3,
   "by_status": { "on_exhibition": 4, "in_storage": 3 },
-  "by_violation_type": { "gravity": 2, "time": 2, "logic": 2, "geometry": 1, "sound": 1 },
-  "by_material": { "латунь": 1, "серебро": 1, "...": 1 },
+  "by_violation_type": { "astronomy": 2, "materials": 2, "metallurgy": 1, "engineering": 1, "geology": 1 },
+  "by_science_field": { "astronomy": 2, "materials": 2, "metallurgy": 1, "engineering": 1, "geology": 1 },
+  "by_material": { "бронза": 1, "дамасская сталь": 1, "...": 1 },
   "by_epoch": { "...": 1 },
   "by_origin": { "...": 1 }
 }
@@ -185,7 +202,7 @@
 {
   "columns": ["name", "status"],
   "rows": [
-    { "name": "Шар, падающий вверх", "status": "on_exhibition" }
+    { "name": "Антикитерский механизм", "status": "on_exhibition" }
   ],
   "count": 1
 }

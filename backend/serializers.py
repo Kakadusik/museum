@@ -1,3 +1,6 @@
+from labels import status_label
+
+
 async def object_to_dict(obj) -> dict:
     explorer_ref = obj.explorer
     explorer = await explorer_ref if explorer_ref is not None else None
@@ -14,7 +17,11 @@ async def object_to_dict(obj) -> dict:
         "material": obj.material,
         "epoch": obj.epoch,
         "origin": obj.origin,
+        "scientific_explanation": obj.scientific_explanation,
+        "source_title": obj.source_title,
+        "source_url": obj.source_url,
         "status": obj.status,
+        "status_label": status_label(obj.status),
         "created_at": obj.created_at.isoformat() if obj.created_at else None,
         "explorer": (
             {"id": explorer.id, "name": explorer.name, "specialization": explorer.specialization}

@@ -19,7 +19,7 @@
         <ul :if="objects.length" class="items-grid" style="list-style:none; padding:0">
           <li class="item-card" :each="obj in objects">
             <a href="/items/{ obj.id }"><h3>{ obj.name }</h3></a>
-            <span class="status { obj.status }">{ obj.status == 'on_exhibition' ? 'На выставке' : 'В запаснике' }</span>
+            <span class="status { obj.status }">{ obj.status_label || obj.status }</span>
           </li>
         </ul>
         <p :if="!objects.length" class="empty">Экспонатов пока нет.</p>

@@ -97,6 +97,9 @@ async def create_item(request):
         material=body.get("material"),
         epoch=body.get("epoch"),
         origin=body.get("origin"),
+        scientific_explanation=body.get("scientific_explanation"),
+        source_title=body.get("source_title"),
+        source_url=body.get("source_url"),
         status=body.get("status") or "in_storage",
         explorer=explorer,
     )
@@ -128,7 +131,16 @@ async def update_item(request, item_id: int):
 
     for field, value in data.items():
         setattr(obj, field, value)
-    for field in ("description", "material", "epoch", "origin", "status"):
+    for field in (
+        "description",
+        "material",
+        "epoch",
+        "origin",
+        "scientific_explanation",
+        "source_title",
+        "source_url",
+        "status",
+    ):
         if field in body:
             setattr(obj, field, body[field])
     if "explorer_id" in body:

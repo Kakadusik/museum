@@ -11,19 +11,26 @@
   <div :if="item">
     <div class="detail">
       <h1>{ item.name }</h1>
-      <p><span class="status { item.status }">{ item.status == 'on_exhibition' ? 'На выставке' : 'В запаснике' }</span></p>
+      <p><span class="status { item.status }">{ item.status_label || item.status }</span></p>
       <p>{ item.description }</p>
 
       <dl>
-        <dt>Тип нарушения</dt>
-        <dd>{ violationLabel(item.violation_type) }</dd>
+        <dt>Область науки</dt>
+        <dd>{ scienceLabel(item.violation_type) }</dd>
         <dt>Материал</dt>
         <dd>{ item.material || '—' }</dd>
         <dt>Эпоха</dt>
         <dd>{ item.epoch || '—' }</dd>
         <dt>Происхождение</dt>
         <dd>{ item.origin || '—' }</dd>
-        <dt>Найден</dt>
+        <dt>Научное объяснение</dt>
+        <dd>{ item.scientific_explanation || '—' }</dd>
+        <dt>Источник</dt>
+        <dd>
+          <a :if="item.source_url" href="{ item.source_url }" target="_blank" rel="noopener">{ item.source_title || item.source_url }</a>
+          <span :if="!item.source_url">{ item.source_title || '—' }</span>
+        </dd>
+        <dt>Исследователь</dt>
         <dd>
           <a :if="item.explorer" href="/explorers/{ item.explorer.id }">{ item.explorer.name }</a>
           <span :if="!item.explorer">—</span>
@@ -49,16 +56,15 @@
           <input name="name" value="{ item.name }" required minlength="2" maxlength="200">
         </label>
         <div class="row">
-          <label>Тип нарушения *
+          <label>Область науки *
             <select name="violation_type" required>
-              <option value="">Выберите тип</option>
+              <option value="">Выберите область</option>
               <option :each="vt in violationTypes" value="{ vt.value }" :selected="item.violation_type == vt.value">{ vt.label }</option>
             </select>
           </label>
           <label>Статус
             <select name="status">
-              <option value="in_storage" :selected="item.status == 'in_storage'">В запаснике</option>
-              <option value="on_exhibition" :selected="item.status == 'on_exhibition'">На выставке</option>
+              <option :each="st in statuses" value="{ st.value }" :selected="item.status == st.value">{ st.label }</option>
             </select>
           </label>
         </div>
@@ -82,6 +88,17 @@
         <label>Происхождение
           <input name="origin" value="{ item.origin }" maxlength="240">
         </label>
+        <label>Научное объяснение
+          <textarea name="scientific_explanation" maxlength="4000">{ item.scientific_explanation }</textarea>
+        </label>
+        <div class="row">
+          <label>Источник — название
+            <input name="source_title" value="{ item.source_title }" maxlength="200">
+          </label>
+          <label>Источник — ссылка
+            <input name="source_url" value="{ item.source_url }" maxlength="400" placeholder="https://doi.org/...">
+          </label>
+        </div>
         <label>Исследователь
           <select name="explorer_id">
             <option value="">Не указан</option>
@@ -125,16 +142,20 @@
     this.explorers = []
     this.exhibitions = []
     this.violationTypes = [
-      { value: 'gravity', label: 'гравитация' },
-      { value: 'time', label: 'время' },
-      { value: 'logic', label: 'логика' },
-      { value: 'geometry', label: 'геометрия' },
-      { value: 'sound', label: 'звук' }
+      { value: 'astronomy', label: 'астрономия' },
+      { value: 'materials', label: 'материаловедение' },
+      { value: 'metallurgy', label: 'металлургия' },
+      { value: 'engineering', label: 'инженерия' },
+      { value: 'geology', label: 'геология' }
+    ]
+    this.statuses = [
+      { value: 'on_exhibition', label: 'На выставке' },
+      { value: 'in_storage', label: 'В хранилище' }
     ]
     this.materials = []
     this.epochs = []
 
-    violationLabel(t) {
+    scienceLabel(t) {
       const found = this.violationTypes.find(v => v.value === t)
       return found ? found.label : t
     }
@@ -155,6 +176,7 @@
         explorers: explorers.explorers,
         exhibitions: exhibitions.exhibitions,
         violationTypes: meta.violation_types || this.violationTypes,
+        statuses: meta.statuses || this.statuses,
         materials: meta.materials || [],
         epochs: meta.epochs || []
       })

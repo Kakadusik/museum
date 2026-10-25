@@ -22,6 +22,9 @@ class ImpossibleObject(Model):
     material = fields.CharField(max_length=120, null=True)
     epoch = fields.CharField(max_length=120, null=True)
     origin = fields.CharField(max_length=240, null=True)
+    scientific_explanation = fields.TextField(null=True)
+    source_title = fields.CharField(max_length=200, null=True)
+    source_url = fields.CharField(max_length=400, null=True)
     status = fields.CharField(max_length=40, index=True, default="in_storage")
     created_at = fields.DatetimeField(auto_now_add=True)
     explorer = fields.ForeignKeyField(

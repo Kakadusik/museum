@@ -1,16 +1,9 @@
 from sanic import Blueprint, json
 
+from labels import SCIENCE_FIELDS, STATUSES
 from models import ImpossibleObject
 
 meta_bp = Blueprint("meta", url_prefix="/api")
-
-VIOLATION_TYPES = [
-    {"value": "gravity", "label": "гравитация"},
-    {"value": "time", "label": "время"},
-    {"value": "logic", "label": "логика"},
-    {"value": "geometry", "label": "геометрия"},
-    {"value": "sound", "label": "звук"},
-]
 
 
 async def _distinct_values(field: str) -> list[str]:
@@ -28,7 +21,9 @@ async def _distinct_values(field: str) -> list[str]:
 async def meta(request):
     return json(
         {
-            "violation_types": VIOLATION_TYPES,
+            "violation_types": SCIENCE_FIELDS,
+            "science_fields": SCIENCE_FIELDS,
+            "statuses": STATUSES,
             "materials": await _distinct_values("material"),
             "epochs": await _distinct_values("epoch"),
         }

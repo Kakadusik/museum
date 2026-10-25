@@ -53,26 +53,35 @@ all_ok &= check("stats total_objects", body["total_objects"], 7)
 all_ok &= check("stats by_status keys", sorted(body["by_status"]), ["in_storage", "on_exhibition"])
 
 # items with filters
-s, body = req("GET", "/api/items", query={"violation_type": "time"})
-all_ok &= check("items filtered time", len(body["items"]), 2)
+s, body = req("GET", "/api/items", query={"violation_type": "astronomy"})
+all_ok &= check("items filtered astronomy", len(body["items"]), 2)
 s, body = req("GET", "/api/items", query={"q": "шар"})
 all_ok &= check("items q=шар", len(body["items"]), 1)
+
+s, body = req("GET", "/api/meta")
+all_ok &= check("meta statuses", [x["label"] for x in body["statuses"]], ["На выставке", "В хранилище"])
+all_ok &= check("meta science fields", len(body["violation_types"]), 5)
+
+s, body = req("GET", "/api/items")
+all_ok &= check("item has scientific explanation", bool(body["items"][0].get("scientific_explanation")), True)
+all_ok &= check("item has source url", bool(body["items"][0].get("source_url")), True)
 
 # full CRUD cycle: explorer -> item -> exhibition -> relink
 s, ex = req("POST", "/api/explorers", {"name": "Тест Крот", "specialization": "Подземное время", "birth_year": 1980})
 all_ok &= check("create explorer", s, 201)
 expl_id = ex["id"]
 
-s, it = req("POST", "/api/items", {"name": "Часы, копающие вглубь", "violation_type": "time", "status": "in_storage", "explorer_id": expl_id, "description": "Идут назад в геологическом смысле", "material": "базальт"})
+s, it = req("POST", "/api/items", {"name": "Тестовый артефакт", "violation_type": "astronomy", "status": "in_storage", "explorer_id": expl_id, "description": "Проверка новых полей", "material": "базальт", "scientific_explanation": "Объяснение", "source_title": "Тестовый источник", "source_url": "https://example.org/source"})
 all_ok &= check("create item", s, 201)
 item_id = it["id"]
 all_ok &= check("item explorer attached", it["explorer"]["id"], expl_id)
+all_ok &= check("item source saved", it["source_url"], "https://example.org/source")
 
 s, exb = req("POST", "/api/exhibitions", {"title": "Временные раскопки", "description": "Выставка недокопанного времени", "location": "Зал Шурф"})
 all_ok &= check("create exhibition", s, 201)
 exb_id = exb["id"]
 
-s, it2 = req("PUT", f"/api/items/{item_id}", {"name": "Часы, копающие вглубь", "violation_type": "time", "status": "on_exhibition", "exhibition_ids": [exb_id]})
+s, it2 = req("PUT", f"/api/items/{item_id}", {"name": "Тестовый артефакт", "violation_type": "astronomy", "status": "on_exhibition", "exhibition_ids": [exb_id]})
 all_ok &= check("update item + exhibition", s, 200)
 all_ok &= check("item exhibition linked", len(it2["exhibitions"]), 1)
 all_ok &= check("item exhibition_ids", it2.get("exhibition_ids"), [exb_id])
@@ -103,7 +112,7 @@ all_ok &= check("item 404", s, 404)
 # restore demo data intact
 s, body = req("GET", "/api/stats")
 all_ok &= check("final total_objects", body["total_objects"], 7)
-all_ok &= check("final total_explorers", body["total_explorers"], 3)
+all_ok &= check("final total_explorers", body["total_explorers"], 7)
 all_ok &= check("final total_exhibitions", body["total_exhibitions"], 3)
 
 print("\nRESULT:", "ALL PASS" if all_ok else "SOME FAILED")

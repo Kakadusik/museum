@@ -14,13 +14,15 @@ async def _group_by(model, field: str) -> dict:
 
 @stats_bp.get("/stats")
 async def stats(request):
+    by_violation_type = await _group_by(ImpossibleObject, "violation_type")
     return json(
         {
             "total_objects": await ImpossibleObject.all().count(),
             "total_explorers": await Explorer.all().count(),
             "total_exhibitions": await Exhibition.all().count(),
             "by_status": await _group_by(ImpossibleObject, "status"),
-            "by_violation_type": await _group_by(ImpossibleObject, "violation_type"),
+            "by_violation_type": by_violation_type,
+            "by_science_field": by_violation_type,
             "by_material": await _group_by(ImpossibleObject, "material"),
             "by_epoch": await _group_by(ImpossibleObject, "epoch"),
             "by_origin": await _group_by(ImpossibleObject, "origin"),

@@ -1,9 +1,11 @@
-# Музей Невозможных Предметов
+# Музей невероятных предметов
 
 Web-приложение на стеку **Sanic + NueJS + PostgreSQL**.
 
-Архив-музей предметов, нарушающих законы физики, времени и логики
-(шар, падающий вверх; часы, идущие вчера; кольцо, которое никогда не существовало, — и т. д.).
+Музей реальных артефактов, которые кажутся невозможными, но имеют научное
+объяснение: Антикитерский механизм, Кубок Ликурга, кинжал Тутанхамона,
+римский бетон, дамасская сабля, Небрский небесный диск и каменные шары Дикис.
+У каждого предмета указаны научное объяснение и ссылка на научную публикацию.
 
 ## Требования
 
@@ -85,7 +87,7 @@ docker push kakadusik/museum:1.0.0
 .venv\Scripts\python e2e_test.py 8000   # prod
 ```
 
-Ожидается 7 предметов / 3 исследователя / 3 выставки и `RESULT: ALL PASS`.
+Ожидается 7 предметов / 7 исследователей / 3 выставки и `RESULT: ALL PASS`.
 
 ## Локальный запуск (без Docker)
 
@@ -146,7 +148,7 @@ nue build                            # статика в frontend/.dist
 
 | Метод | Путь | Описание |
 |---|---|---|
-| GET | `/api/items` | Список предметов (фильтры: `q`, `status`, `violation_type`, `material`, `epoch`) |
+| GET | `/api/items` | Список предметов (фильтры: `q`, `status`, `violation_type` — область науки, `material`, `epoch`) |
 | GET | `/api/items/:id` | Детали предмета |
 | POST | `/api/items` | Добавить предмет |
 | PUT | `/api/items/:id` | Обновить предмет |
@@ -162,7 +164,7 @@ nue build                            # статика в frontend/.dist
 | PUT | `/api/exhibitions/:id` | Обновить выставку |
 | DELETE | `/api/exhibitions/:id` | Удалить выставку |
 | GET | `/api/stats` | Сводка по фондам (только чтение) |
-| GET | `/api/meta` | Справочник типов нарушений, материалов и эпох |
+| GET | `/api/meta` | Справочник областей науки, статусов, материалов и эпох |
 | POST | `/api/sql` | Read-only SQL-консоль (SELECT, WITH, EXPLAIN, SHOW) |
 | GET | `/api/health` | Healthcheck (SELECT 1; 503 при недоступной БД) |
 
@@ -175,7 +177,7 @@ explorers ───────1:N──────── impossible_objects �
 ```
 
 - `explorers` — id, name, specialization, birth_year, nationality, biography
-- `impossible_objects` — id, name, description, violation_type, material, epoch, origin, status, explorer_id (FK), created_at
+- `impossible_objects` — id, name, description, violation_type, material, epoch, origin, scientific_explanation, source_title, source_url, status, explorer_id (FK), created_at
 - `exhibitions` — id, title, description, location
 - `object_exhibitions` — object_id (FK), exhibition_id (FK)
 

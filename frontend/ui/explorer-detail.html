@@ -23,14 +23,14 @@
       </dl>
 
       <div class="related">
-        <h2>Найденные предметы ({ objects.length })</h2>
+        <h2>Связанные предметы ({ objects.length })</h2>
         <ul :if="objects.length" class="items-grid" style="list-style:none; padding:0">
           <li class="item-card" :each="obj in objects">
             <a href="/items/{ obj.id }"><h3>{ obj.name }</h3></a>
-            <span class="status { obj.status }">{ obj.status == 'on_exhibition' ? 'На выставке' : 'В запаснике' }</span>
+            <span class="status { obj.status }">{ obj.status_label || obj.status }</span>
           </li>
         </ul>
-        <p :if="!objects.length" class="empty">Пока не найдено ни одного предмета.</p>
+        <p :if="!objects.length" class="empty">Пока нет связанных предметов.</p>
       </div>
     </div>
   </div>

@@ -2,8 +2,8 @@
 
 <!-- dashboard -->
 <div :is="dashboard">
-  <h1>Музей Невозможных Предметов</h1>
-  <p class="subtitle">Архив предметов, нарушающих законы физики, времени и логики</p>
+  <h1>Музей невероятных предметов</h1>
+  <p class="subtitle">Реальные артефакты, которые кажутся невозможными — но у науки есть объяснение</p>
 
   <div class="stats-grid">
     <div class="stat-card">
@@ -22,18 +22,18 @@
 
   <div class="stats-columns">
     <div class="stat-list">
-      <h2>По типу нарушения</h2>
-      <div class="stat-line" :each="[key, val] in Object.entries(stats.by_violation_type || {})">
-        <span class="stat-key">{ key }</span>
+      <h2>По области науки</h2>
+      <div class="stat-line" :each="[key, val] in Object.entries(stats.by_science_field || stats.by_violation_type || {})">
+        <span class="stat-key">{ scienceLabel(key) }</span>
         <span class="stat-val">{ val }</span>
       </div>
     </div>
 
-    <div>
-      <div class="stat-list" style="margin-bottom: 1.4em">
+    <div class="stats-column">
+      <div class="stat-list">
         <h2>По статусу</h2>
         <div class="stat-line" :each="[key, val] in Object.entries(stats.by_status || {})">
-          <span class="stat-key"><span class="status { key }">{ key }</span></span>
+          <span class="stat-key"><span class="status { key }">{ statusLabel(key) }</span></span>
           <span class="stat-val">{ val }</span>
         </div>
       </div>
@@ -54,10 +54,31 @@
 
   <script>
     this.stats = { total_objects: 0, total_explorers: 0, total_exhibitions: 0 }
+    this.scienceLabels = {}
+    this.statusLabels = {}
+
+    scienceLabel(value) {
+      return this.scienceLabels[value] || value
+    }
+
+    statusLabel(value) {
+      return this.statusLabels[value] || value
+    }
 
     async mounted() {
-      const stats = await fetch('/api/stats').then(r => r.json())
-      this.update({ stats })
+      const [stats, meta] = await Promise.all([
+        fetch('/api/stats').then(r => r.json()),
+        fetch('/api/meta').then(r => r.json())
+      ])
+      const scienceLabels = {}
+      for (const field of meta.violation_types || []) {
+        scienceLabels[field.value] = field.label
+      }
+      const statusLabels = {}
+      for (const status of meta.statuses || []) {
+        statusLabels[status.value] = status.label
+      }
+      this.update({ stats, scienceLabels, statusLabels })
     }
   </script>
 </div>
