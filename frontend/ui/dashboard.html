@@ -58,7 +58,8 @@
     this.statusLabels = {}
 
     scienceLabel(value) {
-      return this.scienceLabels[value] || value
+      const label = this.scienceLabels[value] || value
+      return label.charAt(0).toUpperCase() + label.slice(1)
     }
 
     statusLabel(value) {

@@ -37,7 +37,7 @@
       const exhibition = await fetch(`/api/exhibitions/${id}`).then(r => r.json())
       if (exhibition.error) { this.update({ exhibition: null }); return }
       const objects = (await Promise.all(
-        (exhibition.objects || []).map(i => fetch(`/api/items/${i}`).then(r => r.json()))
+        (exhibition.objects || []).map(i => fetch(`/api/items/${i.id}`).then(r => r.json()))
       )).filter(x => !x.error)
       this.update({ exhibition, objects })
     })

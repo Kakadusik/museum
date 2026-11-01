@@ -283,7 +283,6 @@
 
       .stat-key {
         color: var(--text-dim);
-        text-transform: capitalize;
 
         .status { text-transform: none; }
       }
